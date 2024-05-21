@@ -69,6 +69,8 @@ class Exp_Informer(Exp_Basic):
             'ECL':Dataset_Custom,
             'Solar':Dataset_Custom,
             'custom':Dataset_Custom,
+            'cant_entregas':Dataset_Custom,
+            self.args.data: Dataset_Custom,
         }
         Data = data_dict[self.args.data]
         timeenc = 0 if args.embed!='timeF' else 1
@@ -149,6 +151,8 @@ class Exp_Informer(Exp_Basic):
             self.model.train()
             epoch_time = time.time()
             for i, (batch_x,batch_y,batch_x_mark,batch_y_mark) in enumerate(train_loader):
+                if i == 1:
+                    shapes = (batch_x.shape, batch_y.shape, batch_x_mark.shape, batch_y_mark.shape)
                 iter_count += 1
                 
                 model_optim.zero_grad()
@@ -190,19 +194,155 @@ class Exp_Informer(Exp_Basic):
         best_model_path = path+'/'+'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
         
+        train_loader_pp = DataLoader(
+            train_data,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.num_workers,
+            drop_last=True)
+
+        Data = Dataset_Custom
+        train_dataset_no_pp = Data(
+            root_path=self.args.root_path,
+            data_path=self.args.data_path,
+            flag="train",
+            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
+            features="S",
+            target="cantidad_entregas",
+            inverse=self.args.inverse,
+            timeenc=0 if self.args.embed!='timeF' else 1,
+            freq="d",
+            # cols=[self.args.target]
+        )
+        train_loader_no_pp = DataLoader(
+            train_dataset_no_pp,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.num_workers,
+            drop_last=True)
+        preds = []
+        trues = []
+        i = 0
+        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(train_loader_pp, train_loader_no_pp):
+            pred, _ = self._process_one_batch(
+                train_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
+            
+            _, true = self._process_one_batch(
+                train_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
+                
+            preds.append(pred.detach().cpu().numpy())
+            trues.append(true.detach().cpu().numpy())
+        preds = np.array(preds)
+        trues = np.array(trues)
+        print('train shape:', preds.shape, trues.shape)
+        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        print('train shape:', preds.shape, trues.shape)
+
+        # Save result
+        folder_path = './results/' + setting +'/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        mae, mse, rmse, mape, mspe = metric(preds, trues)
+        print(f"For the training set: mae={mae}, mse={mse}, rmse={rmse}, mape={mape}, mspe={mspe}")
+
+        np.save(folder_path+'metrics_train.npy', np.array([mae, mse, rmse, mape, mspe]))
+        np.save(folder_path+'pred_train.npy', preds)
+        np.save(folder_path+'true_train.npy', trues)
+
+
+        val_loader_pp = DataLoader(
+            vali_data,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.num_workers,
+            drop_last=True)
+
+        val_dataset_no_pp = Data(
+            root_path=self.args.root_path,
+            data_path=self.args.data_path,
+            flag="val",
+            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
+            features="S",
+            target="cantidad_entregas",
+            inverse=self.args.inverse,
+            timeenc=0 if self.args.embed!='timeF' else 1,
+            freq="d",
+        )
+        val_loader_no_pp = DataLoader(
+            val_dataset_no_pp,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.num_workers,
+            drop_last=True)
+
+        val_preds = []
+        val_trues = []
+        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(val_loader_pp, val_loader_no_pp):
+            
+            pred, _ = self._process_one_batch(
+                vali_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
+            _, true = self._process_one_batch(
+                val_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
+
+            val_preds.append(pred.detach().cpu().numpy())
+            val_trues.append(true.detach().cpu().numpy())
+        val_preds = np.array(val_preds)
+        val_trues = np.array(val_trues)
+        print('val shape:', val_preds.shape, val_trues.shape)
+        val_preds = val_preds.reshape(-1, val_preds.shape[-2], val_preds.shape[-1])
+        val_trues = val_trues.reshape(-1, val_trues.shape[-2], val_trues.shape[-1])
+        print('val shape:', val_preds.shape, val_trues.shape)
+
+        # result save
+        folder_path = './results/' + setting +'/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        mae, mse, rmse, mape, mspe = metric(val_preds, val_trues)
+        print(f"For the validation set: mae={mae}, mse={mse}, rmse={rmse}, mape={mape}, mspe={mspe}")
+
+        np.save(folder_path+'metrics_val.npy', np.array([mae, mse, rmse, mape, mspe]))
+        np.save(folder_path+'pred_val.npy', val_preds)
+        np.save(folder_path+'true_val.npy', val_trues)
+
         return self.model
 
     def test(self, setting):
         test_data, test_loader = self._get_data(flag='test')
+
+        Data = Dataset_Custom
+        test_dataset_no_pp = Data(
+            root_path=self.args.root_path,
+            data_path=self.args.data_path,
+            flag="test",
+            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
+            features="S",
+            target="cantidad_entregas",
+            inverse=self.args.inverse,
+            timeenc=0 if self.args.embed!='timeF' else 1,
+            freq="d",
+        )
+        test_loader_no_pp = DataLoader(
+            test_dataset_no_pp,
+            batch_size=self.args.batch_size,
+            shuffle=False,
+            num_workers=self.args.num_workers,
+            drop_last=True)
         
         self.model.eval()
         
         preds = []
         trues = []
         
-        for i, (batch_x,batch_y,batch_x_mark,batch_y_mark) in enumerate(test_loader):
-            pred, true = self._process_one_batch(
+        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(test_loader, test_loader_no_pp):
+            
+            pred, _ = self._process_one_batch(
                 test_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
+            _, true = self._process_one_batch(
+                test_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
+
             preds.append(pred.detach().cpu().numpy())
             trues.append(true.detach().cpu().numpy())
 
@@ -219,7 +359,7 @@ class Exp_Informer(Exp_Basic):
             os.makedirs(folder_path)
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
-        print('mse:{}, mae:{}'.format(mse, mae))
+        print(f"For the test set: mae={mae}, mse={mse}, rmse={rmse}, mape={mape}, mspe={mspe}")
 
         np.save(folder_path+'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path+'pred.npy', preds)
