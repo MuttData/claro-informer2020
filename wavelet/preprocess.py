@@ -3,8 +3,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import pywt
 from typing import List
 from wavelet.utils import wavelet_denoising, decompose_signal_in_different_freq_bands, plot_signals_in_df
+from utils.metrics import RMSE
 
 column_name_to_predict = "cantidad_entregas"
 plant_to_select = "N001"
@@ -62,6 +64,12 @@ def create_decomposed_wavelet_signals():
             mra_signals_df[f"{column_name_to_predict}_details_level_{curr_level}"] = mra_signal
         curr_level += 1
     
+    imra_reconstructed_signal = pywt.imra(mra_signals)
+    reconstructing_error = signal - imra_reconstructed_signal
+    print(f"RMSE(signal, imra_rec_signal) = {RMSE(signal, imra_reconstructed_signal)}")
+    print(f"Count(reconstructing_error > 0) = {np.sum(reconstructing_error > 0)}")
+    mra_signals_df[f"{column_name_to_predict}_reconstructing_error_level_{decomposition_level}"] = reconstructing_error
+
     plot_signals_in_df(mra_signals_df.drop(columns="date"))
     if not os.path.exists(mra_signals_dir):
     # Create the directory
