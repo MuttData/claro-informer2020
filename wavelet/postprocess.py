@@ -8,7 +8,7 @@ import pywt
 from utils.metrics import metric
 
 def plot_true_and_predicted_signal(plant:str, uthresh: int):
-    results_path = f"results/informer_cantidad_entregas_denoised_thr{uthresh}_ftS_sl7_ll7_pl7_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_1"
+    results_path = f"results/informer_cantidad_entregas_denoised_thr{uthresh}_ftS_sl7_ll7_pl7_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_0"
     
     pred_train = np.load(f"{results_path}/pred_train.npy")
     true_train = np.load(f"{results_path}/true_train.npy")
@@ -67,7 +67,7 @@ def recompose_mre_and_evaluate(plant: str, mra_signals_columns: List[str]):
 
     for i, mra_signals_column in enumerate(reversed(mra_signals_columns)):
         
-        results_path = f"results/informer_mra_{mra_signals_column}_ftS_sl7_ll7_pl7_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_0"
+        results_path = f"results/informer_mra_err_batch1_{mra_signals_column}_ftS_sl7_ll7_pl7_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_0"
 
         pred_train_level_i = np.load(f"{results_path}/pred_train.npy")
         true_train = np.load(f"{results_path}/true_train.npy")
@@ -119,22 +119,22 @@ def recompose_mre_and_evaluate(plant: str, mra_signals_columns: List[str]):
     plt.figure(figsize=(70, 7))
     plt.subplot(2, 1, 1)
 
-    plt.plot(pred_train_with_blanks)
     plt.plot(true_train_with_blanks)
+    plt.plot(pred_train_with_blanks)
 
-    plt.plot(pred_val_with_blanks)
     plt.plot(true_val_with_blanks)
+    plt.plot(pred_val_with_blanks)
 
-    plt.plot(pred_test_with_blanks)
     plt.plot(true_test_with_blanks)
+    plt.plot(pred_test_with_blanks)
     
     plt.title(f"7 days predictions for PLANT {plant} | rmse (train, val, test) = {metrics_train[2], metrics_val[2], metrics_test[2]}")
     plt.legend([
-        "Pred signal train",
         "True signal train",
-        "Pred signal val",
+        "Pred signal train",
         "True signal val",
-        "Pred signal test",
+        "Pred signal val",
         "True signal test",
+        "Pred signal test",
         ])
     plt.savefig(f"img/my_plots/mra_preds_{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}.jpg")
