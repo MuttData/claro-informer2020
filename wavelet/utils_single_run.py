@@ -117,7 +117,7 @@ def plot_true_and_predicted_signal(plant: str):
     plt.plot(range(len(pred_train), len(pred_train)+len(pred_val)), pred_val[:,6].reshape(-1))
     plt.plot(range(len(pred_train)+len(pred_val), len(pred_train)+len(pred_val)+len(pred_test)), pred_test[:,6].reshape(-1))
     
-    plt.title(f"7 days predictions for cantidad_entregas for PLANT {plant} | MAE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mdape'], metrics_test['rmse']}")
+    plt.title(f"7 days predictions for cantidad_entregas for PLANT {plant} | MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}")
     plt.legend([
         "True signal",
         "Pred signal train",
@@ -242,17 +242,17 @@ def correct_prediction_predicting_error(
 
     tscv = TimeSeriesSplit(n_splits=CV_N_SPLITS)
 
-    grid_search = RandomizedSearchCV(
-        estimator=LGBMRegressor(), 
-        param_distributions=lgbm_param_grid, 
-        n_iter=GRID_SEARCH_ITERS,
-        cv=tscv, 
-        scoring='neg_root_mean_squared_error', 
-        n_jobs=-1,
-        verbose=1)
-    grid_search.fit(X_error_train, y_error_train)
+    # grid_search = RandomizedSearchCV(
+    #     estimator=LGBMRegressor(), 
+    #     param_distributions=lgbm_param_grid, 
+    #     n_iter=GRID_SEARCH_ITERS,
+    #     cv=tscv, 
+    #     scoring='neg_root_mean_squared_error', 
+    #     n_jobs=-1,
+    #     verbose=1)
+    # grid_search.fit(X_error_train, y_error_train)
     
-    model = LGBMRegressor(**grid_search.best_params_)
+    # model = LGBMRegressor(**grid_search.best_params_)
 
     if shuffle_train:
         shuffle_indices = np.random.permutation(len(X_error_train))
@@ -288,7 +288,7 @@ def correct_prediction_predicting_error(
     n_heading_paddings = ERROR_LOOK_BACK_DAYS + ERROR_LOOK_FORWARDS_DAYS - 1
     print(f"n_heading_paddings = {n_heading_paddings}")
     error_preds = np.pad(error_preds, (n_heading_paddings, 0), constant_values=0)
-    print(f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}")
+    # print(f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}")
     y_preds_corrected = y_preds + error_preds
     return y_preds_corrected
 
