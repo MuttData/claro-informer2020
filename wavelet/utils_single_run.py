@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import polars as pl
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -151,7 +152,7 @@ def plot_true_and_predicted_signal(plant: str):
     plot_signals_in_same_plot(
         true_signal, 
         pred_signal_corrected,
-        title=f"7 days predictions corrected for cantidad_entregas for PLANT {plant}. Corrector: LGBM. No augmentation. MAE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mdape'], metrics_test['rmse']}",
+        title=f"7 days predictions corrected for cantidad_entregas for PLANT {plant}. Corrector: LGBM. No augmentation. MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}",
         legend=[
             "True signal",
             "Predicted and corrected signal",
@@ -163,6 +164,12 @@ def plot_true_and_predicted_signal(plant: str):
     
     np.save(f"{RESULTS_PATH}/true_signal.npy", true_signal)
     np.save(f"{RESULTS_PATH}/pred_corrected_signal.npy", pred_signal_corrected)
+    pl.DataFrame({
+        "date": x_axis_timestamps,
+        "true": true_signal,
+        "pred": pred_signal,
+        "pred_corrected": pred_signal_corrected
+    }).write_csv(f"{RESULTS_PATH}/results.csv")
 
 
 def correct_prediction_predicting_error(
