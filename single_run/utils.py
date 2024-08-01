@@ -15,6 +15,7 @@ from sklearn.linear_model import LinearRegression
 
 from single_run.constants import (
     FEATURES_SEQ_LEN,
+    PRED_SEQ_LEN,
     ERROR_LOOK_BACK_DAYS, 
     ERROR_LOOK_FORWARDS_DAYS,
     SPLIT_TRAIN_PROPORTION,
@@ -30,6 +31,8 @@ from single_run.constants import (
 from utils.metrics import metric, MdAPE
 
 def plot_true_and_predicted_signal(plant: str):
+    
+    pred_len_index = PRED_SEQ_LEN - 1
 
     pred_train = np.load(f"{RESULTS_PATH}/pred_train.npy")
     true_train = np.load(f"{RESULTS_PATH}/true_level_train.npy")
@@ -50,43 +53,37 @@ def plot_true_and_predicted_signal(plant: str):
 
     true_signal = np.concatenate(
         (
-            true_train[:,6].reshape(-1),
-            true_val[:,6].reshape(-1),
-            true_test[:,6].reshape(-1)
+            true_train[:,pred_len_index].reshape(-1),
+            true_val[:,pred_len_index].reshape(-1),
+            true_test[:,pred_len_index].reshape(-1)
         )
     )
 
     pred_signal = np.concatenate(
         (
-            pred_train[:,6].reshape(-1),
-            pred_val[:,6].reshape(-1),
-            pred_test[:,6].reshape(-1)
+            pred_train[:,pred_len_index].reshape(-1),
+            pred_val[:,pred_len_index].reshape(-1),
+            pred_test[:,pred_len_index].reshape(-1)
         )
     )
 
-    preds = np.concatenate(
-        (pred_train[:,6].reshape(-1), pred_val[:,6].reshape(-1), pred_test[:,6].reshape(-1))
-        )
-    trues = np.concatenate(
-        (true_train[:,6].reshape(-1), true_val[:,6].reshape(-1), true_test[:,6].reshape(-1))
-        )
     x_axis_timestamps = np.concatenate((
-        per_sample_timestamp_train[:,6].reshape(-1), 
-        per_sample_timestamp_val[:,6].reshape(-1), 
-        per_sample_timestamp_test[:,6].reshape(-1)
+        per_sample_timestamp_train[:,pred_len_index].reshape(-1), 
+        per_sample_timestamp_val[:,pred_len_index].reshape(-1), 
+        per_sample_timestamp_test[:,pred_len_index].reshape(-1)
         )
         )
 
     metrics_train = obtain_metrics_for_split_size(
-        trues, 
-        preds, 
+        true_signal, 
+        pred_signal, 
         split_prop=(SPLIT_TRAIN_PROPORTION + SPLIT_VAL_PROPORTION),
         test_set=False
         )
 
     metrics_test = obtain_metrics_for_split_size(
-        trues, 
-        preds, 
+        true_signal, 
+        pred_signal, 
         split_prop=(SPLIT_TRAIN_PROPORTION + SPLIT_VAL_PROPORTION)
         )
     
@@ -94,9 +91,9 @@ def plot_true_and_predicted_signal(plant: str):
     # plt.subplot(2, 1, 1)
 
     plt.plot(range(len(true_signal)), true_signal)
-    plt.plot(range(len(pred_train)), pred_train[:,6].reshape(-1))
-    plt.plot(range(len(pred_train), len(pred_train)+len(pred_val)), pred_val[:,6].reshape(-1))
-    plt.plot(range(len(pred_train)+len(pred_val), len(pred_train)+len(pred_val)+len(pred_test)), pred_test[:,6].reshape(-1))
+    plt.plot(range(len(pred_train)), pred_train[:,pred_len_index].reshape(-1))
+    plt.plot(range(len(pred_train), len(pred_train)+len(pred_val)), pred_val[:,pred_len_index].reshape(-1))
+    plt.plot(range(len(pred_train)+len(pred_val), len(pred_train)+len(pred_val)+len(pred_test)), pred_test[:,pred_len_index].reshape(-1))
     
     plt.title(f"7 days predictions for cantidad_entregas for PLANT {plant} | MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}")
     plt.legend([
