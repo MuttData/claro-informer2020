@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 import numpy as np
 import pandas as pd
@@ -262,6 +263,12 @@ class Dataset_Custom(Dataset):
         else:
             self.data_y = data[border1:border2]
         self.data_stamp = data_stamp
+
+        # To store timestamps
+        self.save_timestamps = False
+        self.timestamps = df_raw['date'][border1:border2]
+        self.per_sample_timestamps = np.array([], )
+        print(f"set_type #{self.set_type}: First {self.timestamps.iloc[0]} | Last {self.timestamps.iloc[-1]} | Length {len(self.timestamps)}")
     
     def __getitem__(self, index):
         s_begin = index
@@ -276,6 +283,16 @@ class Dataset_Custom(Dataset):
             seq_y = self.data_y[r_begin:r_end]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
+
+        # To store timestamps
+        if self.save_timestamps:
+            timestamp_to_save = self.timestamps[r_begin:r_end]
+            timestamp_to_save = timestamp_to_save[-self.pred_len:]
+            timestamp_to_save = np.array([timestamp_to_save])
+            if self.per_sample_timestamps.size == 0:
+                self.per_sample_timestamps = timestamp_to_save # Reshape to add a new dimension for single row
+            else:
+                self.per_sample_timestamps = np.concatenate((self.per_sample_timestamps, timestamp_to_save), axis=0)
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
     
@@ -356,13 +373,20 @@ class Dataset_Pred(Dataset):
         else:
             self.data_y = data[border1:border2]
         self.data_stamp = data_stamp
+        # To store timestamps
+        self.save_timestamps = False
+        self.timestamps = list(df_raw['date'][border1:border2])
+        self.timestamps += [(datetime.strptime(self.timestamps[-1],"%Y-%m-%d") + timedelta(days=i+1)).strftime("%Y-%m-%d") for i in range(self.pred_len)]
+        self.timestamps = np.array(self.timestamps)
+        self.per_sample_timestamps = np.array([], )
+
     
     def __getitem__(self, index):
         s_begin = index
         s_end = s_begin + self.seq_len
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
-
+        print(f"data_x.shape: {self.data_x.shape}, timestamps.shape: {self.timestamps.shape}, r_begin: {r_begin}, r_end: {r_end}")
         seq_x = self.data_x[s_begin:s_end]
         if self.inverse:
             seq_y = self.data_x[r_begin:r_begin+self.label_len]
@@ -370,6 +394,15 @@ class Dataset_Pred(Dataset):
             seq_y = self.data_y[r_begin:r_begin+self.label_len]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
+        # To store timestamps
+        if self.save_timestamps:
+            timestamp_to_save = self.timestamps[r_begin:r_end]
+            timestamp_to_save = timestamp_to_save[-self.pred_len:]
+            timestamp_to_save = np.array([timestamp_to_save])
+            if self.per_sample_timestamps.size == 0:
+                self.per_sample_timestamps = timestamp_to_save # Reshape to add a new dimension for single row
+            else:
+                self.per_sample_timestamps = np.concatenate((self.per_sample_timestamps, timestamp_to_save), axis=0)
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
     

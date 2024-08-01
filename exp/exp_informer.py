@@ -6,6 +6,7 @@ from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -76,7 +77,8 @@ class Exp_Informer(Exp_Basic):
         timeenc = 0 if args.embed!='timeF' else 1
 
         if flag == 'test':
-            shuffle_flag = False; drop_last = True; batch_size = args.batch_size; freq=args.freq
+            # shuffle_flag = False; drop_last = True; batch_size = args.batch_size; freq=args.freq
+            shuffle_flag = False; drop_last = False; batch_size = 1; freq=args.freq
         elif flag=='pred':
             shuffle_flag = False; drop_last = False; batch_size = 1; freq=args.detail_freq
             Data = Dataset_Pred
@@ -214,6 +216,7 @@ class Exp_Informer(Exp_Basic):
             freq="d",
             # cols=[self.args.target]
         )
+        train_dataset_no_pp.save_timestamps = True
         train_loader_no_pp = DataLoader(
             train_dataset_no_pp,
             batch_size=self.args.batch_size,
@@ -254,6 +257,7 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'pred_train.npy', preds)
         np.save(folder_path+'true_train.npy', trues)
         np.save(folder_path+'true_level_train.npy', trues_level)
+        np.save(folder_path+'per_sample_timestamps_train.npy', train_dataset_no_pp.per_sample_timestamps)
 
 
         val_loader_pp = DataLoader(
@@ -274,6 +278,7 @@ class Exp_Informer(Exp_Basic):
             timeenc=0 if self.args.embed!='timeF' else 1,
             freq="d",
         )
+        val_dataset_no_pp.save_timestamps = True
         val_loader_no_pp = DataLoader(
             val_dataset_no_pp,
             batch_size=self.args.batch_size,
@@ -315,10 +320,11 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'pred_val.npy', val_preds)
         np.save(folder_path+'true_val.npy', val_trues)
         np.save(folder_path+'true_level_val.npy', val_trues_level)
+        np.save(folder_path+'per_sample_timestamps_val.npy', val_dataset_no_pp.per_sample_timestamps)
 
         return self.model
 
-    def test(self, setting):
+    def test(self, setting, load: bool = False):
         test_data, test_loader = self._get_data(flag='test')
 
         Data = Dataset_Custom
@@ -333,13 +339,17 @@ class Exp_Informer(Exp_Basic):
             timeenc=0 if self.args.embed!='timeF' else 1,
             freq="d",
         )
+        test_dataset_no_pp.save_timestamps = True
         test_loader_no_pp = DataLoader(
             test_dataset_no_pp,
-            batch_size=self.args.batch_size,
+            batch_size=1,
             shuffle=False,
             num_workers=self.args.num_workers,
-            drop_last=True)
-        
+            drop_last=False)
+        if load:
+            path = os.path.join(self.args.checkpoints, setting)
+            best_model_path = path+'/'+'checkpoint.pth'
+            self.model.load_state_dict(torch.load(best_model_path))
         self.model.eval()
         
         preds = []
@@ -377,12 +387,15 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'pred.npy', preds)
         np.save(folder_path+'true.npy', trues)
         np.save(folder_path+'true_level.npy', trues_level)
+        np.save(folder_path+'per_sample_timestamps_test.npy', test_dataset_no_pp.per_sample_timestamps)
 
         return
 
     def predict(self, setting, load=False):
-        pred_data, pred_loader = self._get_data(flag='pred')
+        from datetime import datetime
         
+        pred_data, pred_loader = self._get_data(flag='pred')
+        pred_data.save_timestamps = True
         if load:
             path = os.path.join(self.args.checkpoints, setting)
             best_model_path = path+'/'+'checkpoint.pth'
@@ -398,14 +411,20 @@ class Exp_Informer(Exp_Basic):
             preds.append(pred.detach().cpu().numpy())
 
         preds = np.array(preds)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        
+        preds = preds.reshape(-1, preds.shape[-2])
+        print(pred_data.per_sample_timestamps.shape, preds.shape)
+        real_preds_df = pd.DataFrame({
+            "date": pred_data.per_sample_timestamps[0,:],
+            "pred": preds[0,:],
+        })
+        real_preds_df["calculated_at"] = datetime.now()
         # result save
         folder_path = './results/' + setting +'/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         
         np.save(folder_path+'real_prediction.npy', preds)
+        real_preds_df.to_csv(folder_path + f"{self.args.pred_len}days_preds_df.csv", index=False)
         
         return
 
