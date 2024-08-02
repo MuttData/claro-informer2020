@@ -35,15 +35,15 @@ def plot_true_and_predicted_signal(plant: str):
     pred_len_index = PRED_SEQ_LEN - 1
 
     pred_train = np.load(f"{RESULTS_PATH}/pred_train.npy")
-    true_train = np.load(f"{RESULTS_PATH}/true_level_train.npy")
+    true_train = np.load(f"{RESULTS_PATH}/true_train.npy")
     per_sample_timestamp_train = np.load(f"{RESULTS_PATH}/per_sample_timestamps_train.npy", allow_pickle=True)
 
     pred_val = np.load(f"{RESULTS_PATH}/pred_val.npy")
-    true_val = np.load(f"{RESULTS_PATH}/true_level_val.npy")
+    true_val = np.load(f"{RESULTS_PATH}/true_val.npy")
     per_sample_timestamp_val = np.load(f"{RESULTS_PATH}/per_sample_timestamps_val.npy", allow_pickle=True)
 
     pred_test = np.load(f"{RESULTS_PATH}/pred.npy")
-    true_test = np.load(f"{RESULTS_PATH}/true_level.npy")
+    true_test = np.load(f"{RESULTS_PATH}/true.npy")
     per_sample_timestamp_test = np.load(f"{RESULTS_PATH}/per_sample_timestamps_test.npy", allow_pickle=True)
 
     metrics_train = np.load(f"{RESULTS_PATH}/metrics_train.npy")

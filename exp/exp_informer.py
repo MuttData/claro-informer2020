@@ -203,47 +203,22 @@ class Exp_Informer(Exp_Basic):
             num_workers=self.args.num_workers,
             drop_last=True)
 
-        Data = Dataset_Custom
-        train_dataset_no_pp = Data(
-            root_path=self.args.root_path,
-            data_path=self.args.data_path,
-            flag="train",
-            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
-            features="S",
-            target="cantidad_entregas",
-            inverse=self.args.inverse,
-            timeenc=0 if self.args.embed!='timeF' else 1,
-            freq="d",
-            # cols=[self.args.target]
-        )
-        train_dataset_no_pp.save_timestamps = True
-        train_loader_no_pp = DataLoader(
-            train_dataset_no_pp,
-            batch_size=self.args.batch_size,
-            shuffle=False,
-            num_workers=self.args.num_workers,
-            drop_last=True)
+        train_data.save_timestamps = True
         preds = []
         trues = []
-        trues_level = []
         i = 0
-        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(train_loader_pp, train_loader_no_pp):
-            pred, true_level = self._process_one_batch(
-                train_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
-            
-            _, true = self._process_one_batch(
-                train_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
-                
+        for batch_x, batch_y, batch_x_mark, batch_y_mark in train_loader_pp:
+            pred, true = self._process_one_batch(
+                train_data, batch_x, batch_y, batch_x_mark, batch_y_mark
+                )
             preds.append(pred.detach().cpu().numpy())
             trues.append(true.detach().cpu().numpy())
-            trues_level.append(true_level.detach().cpu().numpy())
+        train_data.save_timestamps = False
         preds = np.array(preds)
         trues = np.array(trues)
-        trues_level = np.array(trues_level)
 
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        trues_level = trues_level.reshape(-1, trues_level.shape[-2], trues_level.shape[-1])
 
         # Save result
         folder_path = './results/' + setting +'/'
@@ -256,8 +231,7 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'metrics_train.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path+'pred_train.npy', preds)
         np.save(folder_path+'true_train.npy', trues)
-        np.save(folder_path+'true_level_train.npy', trues_level)
-        np.save(folder_path+'per_sample_timestamps_train.npy', train_dataset_no_pp.per_sample_timestamps)
+        np.save(folder_path+'per_sample_timestamps_train.npy', train_data.per_sample_timestamps)
 
 
         val_loader_pp = DataLoader(
@@ -267,46 +241,23 @@ class Exp_Informer(Exp_Basic):
             num_workers=self.args.num_workers,
             drop_last=True)
 
-        val_dataset_no_pp = Data(
-            root_path=self.args.root_path,
-            data_path=self.args.data_path,
-            flag="val",
-            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
-            features="S",
-            target="cantidad_entregas",
-            inverse=self.args.inverse,
-            timeenc=0 if self.args.embed!='timeF' else 1,
-            freq="d",
-        )
-        val_dataset_no_pp.save_timestamps = True
-        val_loader_no_pp = DataLoader(
-            val_dataset_no_pp,
-            batch_size=self.args.batch_size,
-            shuffle=False,
-            num_workers=self.args.num_workers,
-            drop_last=True)
+        vali_data.save_timestamps = True
 
         val_preds = []
         val_trues = []
-        val_trues_level = []
 
-        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(val_loader_pp, val_loader_no_pp):
-            
-            pred, true_level = self._process_one_batch(
-                vali_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
-            _, true = self._process_one_batch(
-                val_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
-
+        for batch_x, batch_y, batch_x_mark, batch_y_mark in val_loader_pp:
+            pred, true = self._process_one_batch(
+                vali_data, batch_x, batch_y, batch_x_mark, batch_y_mark
+                )
             val_preds.append(pred.detach().cpu().numpy())
             val_trues.append(true.detach().cpu().numpy())
-            val_trues_level.append(true_level.detach().cpu().numpy())
+        vali_data.save_timestamps = False
         val_preds = np.array(val_preds)
         val_trues = np.array(val_trues)
-        val_trues_level = np.array(val_trues_level)
 
         val_preds = val_preds.reshape(-1, val_preds.shape[-2], val_preds.shape[-1])
         val_trues = val_trues.reshape(-1, val_trues.shape[-2], val_trues.shape[-1])
-        val_trues_level = val_trues_level.reshape(-1, val_trues_level.shape[-2], val_trues_level.shape[-1])
 
         # result save
         folder_path = './results/' + setting +'/'
@@ -319,33 +270,14 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'metrics_val.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path+'pred_val.npy', val_preds)
         np.save(folder_path+'true_val.npy', val_trues)
-        np.save(folder_path+'true_level_val.npy', val_trues_level)
-        np.save(folder_path+'per_sample_timestamps_val.npy', val_dataset_no_pp.per_sample_timestamps)
+        np.save(folder_path+'per_sample_timestamps_val.npy', vali_data.per_sample_timestamps)
 
         return self.model
 
     def test(self, setting, load: bool = False):
         test_data, test_loader = self._get_data(flag='test')
+        test_data.save_timestamps = True
 
-        Data = Dataset_Custom
-        test_dataset_no_pp = Data(
-            root_path=self.args.root_path,
-            data_path=self.args.data_path,
-            flag="test",
-            size=[self.args.seq_len, self.args.label_len, self.args.pred_len],
-            features="S",
-            target="cantidad_entregas",
-            inverse=self.args.inverse,
-            timeenc=0 if self.args.embed!='timeF' else 1,
-            freq="d",
-        )
-        test_dataset_no_pp.save_timestamps = True
-        test_loader_no_pp = DataLoader(
-            test_dataset_no_pp,
-            batch_size=1,
-            shuffle=False,
-            num_workers=self.args.num_workers,
-            drop_last=False)
         if load:
             path = os.path.join(self.args.checkpoints, setting)
             best_model_path = path+'/'+'checkpoint.pth'
@@ -354,26 +286,19 @@ class Exp_Informer(Exp_Basic):
         
         preds = []
         trues = []
-        trues_level = []
         
-        for (batch_x, batch_y, batch_x_mark, batch_y_mark), (batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp) in zip(test_loader, test_loader_no_pp):
-            
-            pred, true_level = self._process_one_batch(
-                test_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
-            _, true = self._process_one_batch(
-                test_dataset_no_pp, batch_x_no_pp, batch_y_no_pp, batch_x_mark_no_pp, batch_y_mark_no_pp)
-
+        for batch_x, batch_y, batch_x_mark, batch_y_mark in test_loader:
+            pred, true = self._process_one_batch(
+                test_data, batch_x, batch_y, batch_x_mark, batch_y_mark
+                )
             preds.append(pred.detach().cpu().numpy())
             trues.append(true.detach().cpu().numpy())
-            trues_level.append(true_level.detach().cpu().numpy())
-
+        test_data.save_timestamps = False
         preds = np.array(preds)
         trues = np.array(trues)
-        trues_level = np.array(trues_level)
 
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        trues_level = trues_level.reshape(-1, trues_level.shape[-2], trues_level.shape[-1])
 
         # result save
         folder_path = './results/' + setting +'/'
@@ -386,8 +311,7 @@ class Exp_Informer(Exp_Basic):
         np.save(folder_path+'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path+'pred.npy', preds)
         np.save(folder_path+'true.npy', trues)
-        np.save(folder_path+'true_level.npy', trues_level)
-        np.save(folder_path+'per_sample_timestamps_test.npy', test_dataset_no_pp.per_sample_timestamps)
+        np.save(folder_path+'per_sample_timestamps_test.npy', test_data.per_sample_timestamps)
 
         return
 
@@ -409,6 +333,7 @@ class Exp_Informer(Exp_Basic):
             pred, true = self._process_one_batch(
                 pred_data, batch_x, batch_y, batch_x_mark, batch_y_mark)
             preds.append(pred.detach().cpu().numpy())
+        pred_data.save_timestamps = False
 
         preds = np.array(preds)
         preds = preds.reshape(-1, preds.shape[-2])
