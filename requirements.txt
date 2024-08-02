@@ -1,5 +1,40 @@
-matplotlib == 3.1.1
-numpy == 1.19.4
-pandas == 0.25.1
-scikit_learn == 0.21.3
-torch == 1.8.0
+black==24.4.2
+click==8.1.7
+contourpy==1.2.1
+cx-Oracle==8.3.0
+cycler==0.12.1
+decouple==0.0.7
+fonttools==4.51.0
+greenlet==3.0.3
+importlib_resources==6.4.0
+isort==5.13.2
+joblib==1.4.2
+kiwisolver==1.4.5
+lightgbm==4.3.0
+matplotlib==3.8.4
+mypy-extensions==1.0.0
+numpy==1.25.2
+packaging==24.0
+pandas==2.2.2
+pathspec==0.12.1
+patsy==0.5.6
+pillow==10.3.0
+platformdirs==4.2.2
+polars==1.2.0
+pyparsing==3.1.2
+python-dateutil==2.9.0.post0
+python-decouple==3.8
+python-dotenv==1.0.1
+pytz==2024.1
+PyWavelets==1.6.0
+scikit-learn==1.4.2
+scipy==1.9.3
+six==1.16.0
+SQLAlchemy==2.0.31
+statsmodels==0.14.2
+threadpoolctl==3.5.0
+tomli==2.0.1
+torch==1.8.0
+typing_extensions==4.11.0
+tzdata==2024.1
+zipp==3.18.1
