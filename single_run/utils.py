@@ -25,7 +25,8 @@ from single_run.constants import (
     GRID_SEARCH_ITERS,
     RESULTS_PATH,
     PLOTS_SAVING_DIR,
-    NUM_AUGMENTATIONS
+    NUM_AUGMENTATIONS,
+    USE_LINEAR_CORRECTOR
     )
     
 from utils.metrics import metric, MdAPE
@@ -204,33 +205,35 @@ def correct_prediction_predicting_error(
         params["metric"] = 'rmse'
         params["early_stopping_rounds"] = 200
 
-    model = LinearRegression() # lgb.LGBMRegressor(**params)
+    model = LinearRegression()
 
-    lgbm_param_grid = {
-        'learning_rate': [0.005, 0.01, 0.05],
-        'num_leaves': [31, 63, 127],
-        'max_depth': [3, 5, 7],
-        'min_child_samples': [10, 20, 50],
-        'subsample': [0.6, 0.8, 1.0],
-        'colsample_bytree': [0.6, 0.8, 1.0],
-        'reg_alpha': [0.0, 0.1, 0.5],
-        'reg_lambda': [0.0, 0.1, 0.5],
-        'n_estimators': [100, 200, 500]
-    }
+    if not USE_LINEAR_CORRECTOR:
+        lgbm_param_grid = {
+            'learning_rate': [0.005, 0.01, 0.05],
+            'num_leaves': [31, 63, 127],
+            'max_depth': [3, 5, 7],
+            'min_child_samples': [10, 20, 50],
+            'subsample': [0.6, 0.8, 1.0],
+            'colsample_bytree': [0.6, 0.8, 1.0],
+            'reg_alpha': [0.0, 0.1, 0.5],
+            'reg_lambda': [0.0, 0.1, 0.5],
+            'n_estimators': [100, 200, 500]
+        }
 
-    tscv = TimeSeriesSplit(n_splits=CV_N_SPLITS)
+        tscv = TimeSeriesSplit(n_splits=CV_N_SPLITS)
 
-    # grid_search = RandomizedSearchCV(
-    #     estimator=LGBMRegressor(), 
-    #     param_distributions=lgbm_param_grid, 
-    #     n_iter=GRID_SEARCH_ITERS,
-    #     cv=tscv, 
-    #     scoring='neg_root_mean_squared_error', 
-    #     n_jobs=-1,
-    #     verbose=1)
-    # grid_search.fit(X_error_train, y_error_train)
-    
-    # model = LGBMRegressor(**grid_search.best_params_)
+        grid_search = RandomizedSearchCV(
+            estimator=LGBMRegressor(), 
+            param_distributions=lgbm_param_grid, 
+            n_iter=GRID_SEARCH_ITERS,
+            cv=tscv, 
+            scoring='neg_root_mean_squared_error', 
+            n_jobs=-1,
+            verbose=1)
+        grid_search.fit(X_error_train, y_error_train)
+        
+        model = LGBMRegressor(**grid_search.best_params_)
+        print(f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}")
 
     if shuffle_train:
         shuffle_indices = np.random.permutation(len(X_error_train))
@@ -266,7 +269,6 @@ def correct_prediction_predicting_error(
     n_heading_paddings = ERROR_LOOK_BACK_DAYS + ERROR_LOOK_FORWARDS_DAYS - 1
     print(f"n_heading_paddings = {n_heading_paddings}")
     error_preds = np.pad(error_preds, (n_heading_paddings, 0), constant_values=0)
-    # print(f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}")
     y_preds_corrected = y_preds + error_preds
     return y_preds_corrected
 

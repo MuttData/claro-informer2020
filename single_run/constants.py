@@ -1,10 +1,15 @@
 FEATURES_SEQ_LEN = 28
+PRED_SEQ_LEN = 7
 
+USE_LINEAR_CORRECTOR = True
 ERROR_LOOK_BACK_DAYS = 28
 ERROR_LOOK_FORWARDS_DAYS = 1
 
+CV_N_SPLITS = 5
+GRID_SEARCH_ITERS = 30
+
 SPLIT_TRAIN_PROPORTION = 0.67
-SPLIT_VAL_PROPORTION = 0.13 + 0.05
+SPLIT_VAL_PROPORTION = 0.13
 SPLIT_RANDOM_STATE = 42
 
 NUM_AUGMENTATIONS = 20
@@ -14,8 +19,11 @@ MODEL_SUFFIX = "lgbm"
 
 PLOTS_SAVING_DIR = "img/my_plots/mra_2024"
 
-CV_N_SPLITS = 5
-GRID_SEARCH_ITERS = 1
 
-DATA_PARAM = "single_run_lgbm_total_20240712_5"
-RESULTS_PATH = f"results/informer_{DATA_PARAM}_ftS_sl{FEATURES_SEQ_LEN}_ll7_pl7_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_0"
+DATA_DATE = "20240731" # Next date to the last date of the dataset
+
+SIGNALS_DIR = "data/logtel"
+SIGNAL_FILENAME = f"cantidad_entregas_total_{DATA_DATE}.csv"
+
+DATA_PARAM = f"single_run_lgbm_total_{DATA_DATE}"
+RESULTS_PATH = f"results/informer_{DATA_PARAM}_ftS_sl{FEATURES_SEQ_LEN}_ll7_pl{PRED_SEQ_LEN}_dm512_nh8_el2_dl1_df2048_atprob_fc5_ebtimeF_dtTrue_mxTrue_test_0"
