@@ -1,28 +1,28 @@
 import subprocess
 
-from wavelet.utils_single_run import plot_true_and_predicted_signal
-from wavelet.constants import FEATURES_SEQ_LEN, DATA_PARAM
+from single_run.constants import (DATA_PARAM, FEATURES_SEQ_LEN, PRED_SEQ_LEN,
+                                  RESULTS_PATH, SIGNAL_FILENAME, SIGNALS_DIR)
+from single_run.utils import plot_true_and_predicted_signal
+
 plant_to_select = "ALL"
 
-signals_dir = "data/logtel"
-signal_filename = "cantidad_entregas_total.csv"
 command = [
     "python", "-u", "main_informer.py",
     "--model", "informer",
     "--data", DATA_PARAM,
-    "--root_path", signals_dir,
-    "--data_path", signal_filename,
+    "--root_path", SIGNALS_DIR,
+    "--data_path", SIGNAL_FILENAME,
     "--features", "S",
     "--target", "cantidad_entregas",
     "--freq", "d",
     "--seq_len", f"{FEATURES_SEQ_LEN}",
     "--label_len", "7",
-    "--pred_len", "7",
+    "--pred_len", f"{PRED_SEQ_LEN}",
     "--enc_in", "1",
     "--dec_in", "1",
     "--c_out", "1",
     # "--skip_training",
-    "--batch_size", "16",
+    "--batch_size", "8",
     "--do_predict",
     "--itr", "1",
     "--inverse",
@@ -36,4 +36,4 @@ else:
     # Process the captured output (optional)
     print("Output:", output.decode())
 plot_true_and_predicted_signal(plant_to_select)
-
+print(f"RESULTS_PATH: {RESULTS_PATH}")

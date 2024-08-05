@@ -1,5 +1,5 @@
 from random import randint
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -8,19 +8,47 @@ import pandas as pd
 import polars as pl
 from lightgbm import LGBMRegressor, plot_importance
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import (RandomizedSearchCV, TimeSeriesSplit,
-                                     train_test_split)
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    TimeSeriesSplit,
+    train_test_split,
+)
 
-from single_run.constants import (CV_N_SPLITS, ERROR_LOOK_BACK_DAYS,
-                                  ERROR_LOOK_FORWARDS_DAYS, FEATURES_SEQ_LEN,
-                                  GRID_SEARCH_ITERS, NUM_AUGMENTATIONS,
-                                  PLOTS_SAVING_DIR, PRED_SEQ_LEN, RESULTS_PATH,
-                                  SPLIT_RANDOM_STATE, SPLIT_TRAIN_PROPORTION,
-                                  SPLIT_VAL_PROPORTION, USE_LINEAR_CORRECTOR)
+from single_run.constants import (
+    CV_N_SPLITS,
+    ERROR_LOOK_BACK_DAYS,
+    ERROR_LOOK_FORWARDS_DAYS,
+    FEATURES_SEQ_LEN,
+    GRID_SEARCH_ITERS,
+    NUM_AUGMENTATIONS,
+    PLOTS_SAVING_DIR,
+    PRED_SEQ_LEN,
+    RESULTS_PATH,
+    SPLIT_RANDOM_STATE,
+    SPLIT_TRAIN_PROPORTION,
+    SPLIT_VAL_PROPORTION,
+    USE_LINEAR_CORRECTOR,
+)
 from utils.metrics import MdAPE, metric
 
 
-def plot_true_and_predicted_signal(plant: str):
+def plot_true_and_predicted_signal() -> None:
+    """
+    Plots the true and predicted signals, as well as the corrected predictions,
+    for the time series data. Saves the plots to specified paths and stores the
+    results in a CSV file.
+
+    The function loads the true and predicted signals for training, validation,
+    and test sets, computes metrics, and visualizes the results. It also applies
+    a correction to the predictions using an error prediction model and plots
+    the corrected predictions.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
 
     pred_len_index = PRED_SEQ_LEN - 1
 
@@ -84,7 +112,6 @@ def plot_true_and_predicted_signal(plant: str):
     )
 
     plt.figure(figsize=(70, 14))
-    # plt.subplot(2, 1, 1)
 
     plt.plot(range(len(true_signal)), true_signal)
     plt.plot(range(len(pred_train)), pred_train[:, pred_len_index].reshape(-1))
@@ -101,7 +128,7 @@ def plot_true_and_predicted_signal(plant: str):
     )
 
     plt.title(
-        f"7 days predictions for cantidad_entregas for PLANT {plant} | MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}"
+        f"7 days predictions for total cantidad_entregas | MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}"
     )
     plt.legend(
         [
@@ -139,7 +166,7 @@ def plot_true_and_predicted_signal(plant: str):
     plot_signals_in_same_plot(
         true_signal,
         pred_signal_corrected,
-        title=f"7 days predictions corrected for cantidad_entregas for PLANT {plant}. Corrector: LGBM. No augmentation. MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}",
+        title=f"7 days predictions corrected for total cantidad_entregas. Corrector: {'linear regressor' if USE_LINEAR_CORRECTOR else 'LGBM'}. MAE, MAPE, MdAPE, RMSE train = {metrics_train['mae'], metrics_train['mape'], metrics_train['mdape'], metrics_train['rmse']} | MAE, MAPE, MdAPE, RMSE test = {metrics_test['mae'], metrics_test['mape'], metrics_test['mdape'], metrics_test['rmse']}",
         legend=[
             "True signal",
             "Predicted and corrected signal",
@@ -167,7 +194,24 @@ def correct_prediction_predicting_error(
     augment: bool = False,
     early_stopping: bool = False,
     shuffle_train: bool = False,
-):
+) -> np.array:
+    """
+    Corrects the predicted values using an error prediction model.
+
+    The function calculates the error between the true and predicted values,
+    then trains a model to predict the error. The corrected predictions are
+    obtained by adding the predicted error to the original predictions.
+
+    Args:
+        y_trues (np.array): The true values.
+        y_preds (np.array): The predicted values.
+        augment (bool): If True, data augmentation is applied.
+        early_stopping (bool): If True, early stopping is used during training.
+        shuffle_train (bool): If True, the training data is shuffled.
+
+    Returns:
+        np.array: The corrected predictions.
+    """
 
     y_error = y_trues - y_preds
 
@@ -294,15 +338,35 @@ def correct_prediction_predicting_error(
 
 
 def plot_signals_in_same_plot(
-    *signals,
+    *signals: np.array,
     title: str = None,
     legend: List[str] = None,
     show: bool = False,
     save_path=f"img/my_plots/plot.png",
     x_labels: List[str] = None,
     day_locator_interval: int = 7,
-    linestyles=None,
-):
+    linestyles: List[str] = None,
+) -> None:
+    """
+    Plots multiple signals on the same plot with optional customization.
+
+    The function allows plotting multiple time series signals on a single plot,
+    with options to set the title, legend, x-axis labels, linestyles, and
+    whether to show or save the plot.
+
+    Args:
+        *signals (np.array): Variable number of arrays representing the signals to plot.
+        title (str, optional): Title of the plot.
+        legend (List[str], optional): Legend labels for the plot.
+        show (bool, optional): If True, displays the plot.
+        save_path (str, optional): Path to save the plot image.
+        x_labels (List[str], optional): Labels for the x-axis.
+        day_locator_interval (int, optional): Interval for day locator on x-axis.
+        linestyles (List[str], optional): Linestyles for each signal plot.
+
+    Returns:
+        None
+    """
 
     # Create the figure with appropriate subplots
     plt.figure(figsize=(70, 14))  # Adjust figure size as needed
@@ -329,8 +393,21 @@ def plot_signals_in_same_plot(
 
 
 def augment_data_with_random_deviation(
-    time_series,
-):
+    time_series: np.array,
+) -> Tuple[np.array, np.array]:
+    """
+    Augments the time series data by adding random deviations.
+
+    The function generates augmented data by adding random deviations to the
+    original time series data, creating multiple augmented versions. It then
+    creates a dataset with look-back and look-forward sequences.
+
+    Args:
+        time_series (np.array): The original time series data.
+
+    Returns:
+        Tuple[np.array, np.array]: Augmented features and targets.
+    """
 
     MAX_DEVIATION_CONCATS = 5
     MAX_OFFSETS_PER_DEVIATION = 100
@@ -375,7 +452,24 @@ def augment_data_with_random_deviation(
     return features, targets[:, -1]
 
 
-def create_dataset(dataset, look_back=1, look_forward=7):
+def create_dataset(
+    dataset: np.array, look_back: int = 1, look_forward: int = 7
+) -> Tuple[np.array, np.array]:
+    """
+    Creates a dataset with look-back and look-forward sequences.
+
+    The function generates input-output pairs from the provided dataset based
+    on the specified look-back and look-forward lengths.
+
+    Args:
+        dataset (np.array): The original time series data.
+        look_back (int, optional): The number of past time steps to consider.
+        look_forward (int, optional): The number of future time steps to predict.
+
+    Returns:
+        Tuple[np.array, np.array]: Input features and output targets.
+    """
+
     dataX, dataY = [], []
     for i in range(len(dataset) - look_back - look_forward + 1):
         a = dataset[i : (i + look_back)]
@@ -386,8 +480,26 @@ def create_dataset(dataset, look_back=1, look_forward=7):
 
 
 def scatter_plot_for_different_days_diff(
-    signal, days_diff, range_min, range_max, show=False
-):
+    signal: np.array,
+    days_diff: int,
+    range_min: float,
+    range_max: float,
+    show: bool = False,
+) -> None:
+    """
+    Creates a scatter plot for the given signal with a specified days difference.
+
+    The function generates a scatter plot showing the relationship between the
+    original signal and its shifted version by a given number of days. It fits a
+    linear regression line to the data.
+
+    Args:
+        signal (np.array): The signal to plot.
+        days_diff (int): The number of days to shift the signal.
+        range_min (float): The minimum value for the plot range.
+        range_max (float): The maximum value for the plot range.
+        show (bool, optional): If True, displays the plot.
+    """
     signal_orig = signal[days_diff:]
     signal_shifted = signal[:-days_diff]
 
@@ -413,9 +525,24 @@ def scatter_plot_for_different_days_diff(
 
 
 def obtain_metrics_for_split_size(
-    true_signal, pred_signal, split_prop=SPLIT_TRAIN_PROPORTION, test_set: bool = True
-) -> Dict:
+    true_signal: np.array,
+    pred_signal: np.array,
+    split_prop: float = SPLIT_TRAIN_PROPORTION,
+    test_set: bool = True,
+) -> Dict[str, float]:
+    """
+    Obtain evaluation metrics for a specified split of the signal.
 
+    Parameters:
+        true_signal (array-like): The true values.
+        pred_signal (array-like): The predicted values.
+        split_prop (float or int): Proportion of the data to use for training (if <= 1)
+                                    or absolute number of samples (if > 1).
+        test_set (bool): Whether to evaluate on the test set (True) or training set (False).
+
+    Returns:
+        Dict[str, float]: Metrics including MAE, MSE, RMSE, MAPE, MSPE, MdAPE.
+    """
     split_len = 0
     if split_prop <= 1:
         split_len = int(len(true_signal) * split_prop)
