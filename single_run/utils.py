@@ -14,7 +14,7 @@ from sklearn.model_selection import (
     train_test_split,
 )
 
-from single_run.constants import (
+from single_run.run_vars import (
     CV_N_SPLITS,
     ERROR_LOOK_BACK_DAYS,
     ERROR_LOOK_FORWARDS_DAYS,

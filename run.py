@@ -1,6 +1,13 @@
+"""
+This script runs the `main_informer.py` script for time-series forecasting using the Informer model. It constructs and executes 
+a command with specific parameters for model prediction, captures and processes the output, and visualizes the results.
+
+Data generated in this run (predictions and their timestamps, graphs, ) are stored to the RESULTS_PATH path.
+"""
+
 import subprocess
 
-from single_run.constants import (DATA_PARAM, FEATURES_SEQ_LEN, PRED_SEQ_LEN,
+from single_run.run_vars import (DATA_PARAM, FEATURES_SEQ_LEN, PRED_SEQ_LEN,
                                   RESULTS_PATH, SIGNAL_FILENAME, SIGNALS_DIR)
 from single_run.utils import plot_true_and_predicted_corrected_signal
 
