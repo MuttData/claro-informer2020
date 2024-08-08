@@ -32,7 +32,7 @@ from single_run.constants import (
 from utils.metrics import MdAPE, metric
 
 
-def plot_true_and_predicted_signal() -> None:
+def plot_true_and_predicted_corrected_signal() -> None:
     """
     Plots the true and predicted signals, as well as the corrected predictions,
     for the time series data. Saves the plots to specified paths and stores the
@@ -42,12 +42,6 @@ def plot_true_and_predicted_signal() -> None:
     and test sets, computes metrics, and visualizes the results. It also applies
     a correction to the predictions using an error prediction model and plots
     the corrected predictions.
-
-    Args:
-        None
-
-    Returns:
-        None
     """
 
     pred_len_index = PRED_SEQ_LEN - 1

@@ -2,7 +2,7 @@ import subprocess
 
 from single_run.constants import (DATA_PARAM, FEATURES_SEQ_LEN, PRED_SEQ_LEN,
                                   RESULTS_PATH, SIGNAL_FILENAME, SIGNALS_DIR)
-from single_run.utils import plot_true_and_predicted_signal
+from single_run.utils import plot_true_and_predicted_corrected_signal
 
 command = [
     "python", "-u", "main_informer.py",
@@ -33,5 +33,5 @@ if err:
 else:
     # Process the captured output (optional)
     print("Output:", output.decode())
-plot_true_and_predicted_signal()
+plot_true_and_predicted_corrected_signal()
 print(f"RESULTS_PATH: {RESULTS_PATH}")
