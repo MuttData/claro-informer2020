@@ -39,6 +39,7 @@ Some modifications have been done to the Informer2020 to keep track of the trave
 When training the Informer2020 shuffles the data. Therefore, right after each training stage there is a second data loader that traverses the data in chronological order (trues), passes it through the trained model (preds) and stores the resulting data in the RESULT_PATH path. The graphs of the final stage of the scripts are also saved to this directory.
 
 ## TODOs
+1. The corrector (function correct_future_predictions) is yet no implemented for real predictions. This is, being able to predict the error of predictions of the future. To do this consider adjusting the values of ERROR_LOOK_BACK_DAYS and ERROR_LOOK_FORWARDS_DAYS acordingly so that those are variables possible to obtain when doing predictions of the future. Also, currently the corrector predicts the error of just the +7 future day, but we are providing the client with Informer predictions of +1, +2, ..., +7. So this has to be  eneralized somehow to enable the correction of all the predicted days.
 # Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting (AAAI'21 Best Paper)
 ![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg?style=plastic)
 ![PyTorch 1.2](https://img.shields.io/badge/PyTorch%20-%23EE4C2C.svg?style=plastic)
