@@ -30,9 +30,14 @@ deactivate
 This will return your terminal to the global Python environment.
 
 ## Training an model
-To run the model, activate your virtual environment are execute the *run.py* script.
+To run the model, activate your virtual environment and execute the *run.py* script. This script trains the Informer2020 model by wrapping the execution of the script *main_informer.py*. The settings of the run of this wrapper are determined for what is defined in the *single_run/run_vars.py* file.
+
+Some modifications have been done to the Informer2020 to keep track of the traversed and predicted data and timestamps.
+
 
 ## How does this fork handles the data?
+When training the Informer2020 shuffles the data. Therefore, right after each training stage there is a second data loader that traverses the data in chronological order (trues), passes it through the trained model (preds) and stores the resulting data in the RESULT_PATH path. The graphs of the final stage of the scripts are also saved to this directory.
+
 ## TODOs
 # Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting (AAAI'21 Best Paper)
 ![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg?style=plastic)
