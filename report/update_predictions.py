@@ -6,11 +6,10 @@ import pandas as pd
 from sqlalchemy import create_engine, Table, Column, Date, Float, MetaData
 from sqlalchemy.orm import sessionmaker
 
-from wavelet.constants import RESULTS_PATH
+from single_run.constants import RESULTS_PATH
 from cfg import ORACLE_CFG
 from report.utils import get_uri_db_oracle
-import cx_Oracle
-# cx_Oracle.init_oracle_client(lib_dir="/opt/oracle/instantclient_23_4")
+
 
 # Define the table schema using SQLAlchemy
 metadata = MetaData()
