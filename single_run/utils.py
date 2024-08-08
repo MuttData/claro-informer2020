@@ -21,7 +21,6 @@ from single_run.run_vars import (
     FEATURES_SEQ_LEN,
     GRID_SEARCH_ITERS,
     NUM_AUGMENTATIONS,
-    PLOTS_SAVING_DIR,
     PRED_SEQ_LEN,
     RESULTS_PATH,
     SPLIT_RANDOM_STATE,
@@ -515,7 +514,7 @@ def scatter_plot_for_different_days_diff(
 
     if show:
         plt.show()
-    plt.savefig(f"{PLOTS_SAVING_DIR}/errors_shifted.png")
+    plt.savefig(f"{RESULTS_PATH}/errors_shifted.png")
 
 
 def obtain_metrics_for_split_size(
