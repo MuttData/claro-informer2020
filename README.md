@@ -1,3 +1,34 @@
+# Logtel's Informer Fork
+This repo is a fork of the repo [zhouhaoyi/Informer2020](https://github.com/zhouhaoyi/Informer2020/tree/main). The original documetation of that repo is in the [next section].(#informer-beyond-efficient-transformer-for-long-sequence-time-series-forecasting-aaai21-best-paper)
+.
+## Setting Up a Virtual Environment
+
+Follow these steps to create and activate a virtual environment, and install the required dependencies:
+
+### 1. Create a Virtual Environment
+In your project directory, run the following command to create a virtual environment:
+```bash
+python -m venv venv
+```
+This will create a directory named venv that contains the virtual environment.
+### 2. Activate the Virtual Environment
+```bash
+python -m venv venv
+```
+Once activated, your terminal prompt will change to indicate that the virtual environment is active.
+### 3. Install dependencies
+With the virtual environment activated, install the required packages using `requirements.txt`:
+```bash
+pip install -r requirements.txt
+```
+This command will install all the packages listed in the requirements.txt file into your virtual environment.
+### 3. Deactivate the Virtual Environment
+When you not longer want to use this environment, you can deactivate the virtual environment by simply running:
+```bash
+deactivate
+```
+This will return your terminal to the global Python environment.
+
 # Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting (AAAI'21 Best Paper)
 ![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg?style=plastic)
 ![PyTorch 1.2](https://img.shields.io/badge/PyTorch%20-%23EE4C2C.svg?style=plastic)
