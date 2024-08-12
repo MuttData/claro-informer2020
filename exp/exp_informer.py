@@ -349,7 +349,7 @@ class Exp_Informer(Exp_Basic):
             os.makedirs(folder_path)
         
         np.save(folder_path+'real_prediction.npy', preds)
-        real_preds_df.to_csv(folder_path + f"{self.args.pred_len}days_preds_df.csv", index=False)
+        real_preds_df.to_csv(folder_path + f"real_prediction.csv", index=False)
         
         return
 

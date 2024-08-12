@@ -17,7 +17,7 @@ SPLIT_TRAIN_PROPORTION = 0.67
 SPLIT_VAL_PROPORTION = 0.13
 SPLIT_RANDOM_STATE = 42
 
-DATA_DATE = "20240801" # Raw data identifier. Next date to the last date of the dataset
+DATA_DATE = "20240809" # Raw data identifier. Next date to the last date of the dataset
 
 SIGNALS_DIR = "data/logtel" # Directory where raw data is stored
 SIGNAL_FILENAME = f"cantidad_entregas_total_{DATA_DATE}.csv" # Raw data filename

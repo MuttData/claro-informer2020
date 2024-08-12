@@ -1,3 +1,4 @@
+import logging
 from random import randint
 from typing import Dict, List, Tuple
 
@@ -8,26 +9,15 @@ import pandas as pd
 import polars as pl
 from lightgbm import LGBMRegressor, plot_importance
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import (
-    RandomizedSearchCV,
-    TimeSeriesSplit,
-    train_test_split,
-)
+from sklearn.model_selection import (RandomizedSearchCV, TimeSeriesSplit,
+                                     train_test_split)
 
-from single_run.run_vars import (
-    CV_N_SPLITS,
-    ERROR_LOOK_BACK_DAYS,
-    ERROR_LOOK_FORWARDS_DAYS,
-    FEATURES_SEQ_LEN,
-    GRID_SEARCH_ITERS,
-    NUM_AUGMENTATIONS,
-    PRED_SEQ_LEN,
-    RESULTS_PATH,
-    SPLIT_RANDOM_STATE,
-    SPLIT_TRAIN_PROPORTION,
-    SPLIT_VAL_PROPORTION,
-    USE_LINEAR_CORRECTOR,
-)
+from single_run.run_vars import (CV_N_SPLITS, ERROR_LOOK_BACK_DAYS,
+                                 ERROR_LOOK_FORWARDS_DAYS, FEATURES_SEQ_LEN,
+                                 GRID_SEARCH_ITERS, NUM_AUGMENTATIONS,
+                                 PRED_SEQ_LEN, RESULTS_PATH,
+                                 SPLIT_RANDOM_STATE, SPLIT_TRAIN_PROPORTION,
+                                 SPLIT_VAL_PROPORTION, USE_LINEAR_CORRECTOR)
 from utils.metrics import MdAPE, metric
 
 
@@ -215,7 +205,7 @@ def correct_prediction_predicting_error(
     #     y_error.max()
     #     )
 
-    print(f"Raw error shape: {y_error.shape}")
+    logging.info(f"Raw error shape: {y_error.shape}")
 
     error_features, error_targets = create_dataset(
         y_error, look_back=ERROR_LOOK_BACK_DAYS, look_forward=ERROR_LOOK_FORWARDS_DAYS
@@ -223,7 +213,7 @@ def correct_prediction_predicting_error(
     # error_features = error_features[:, [-28, -21, -14, -13, -9, -7, -2, -1]]
     error_targets = error_targets[:, -1]
 
-    print(
+    logging.info(
         f"error features shape: {error_features.shape} | error targets shape: {error_targets.shape}"
     )
 
@@ -235,10 +225,10 @@ def correct_prediction_predicting_error(
         shuffle=False,
     )
 
-    print(
+    logging.info(
         f"error training features shape: {X_error_train.shape} | error train targets shape: {y_error_train.shape}"
     )
-    print(
+    logging.info(
         f"error test features shape: {X_error_test.shape} | error test targets shape: {y_error_test.shape}"
     )
 
@@ -247,7 +237,7 @@ def correct_prediction_predicting_error(
         X_error_train, y_error_train = augment_data_with_random_deviation(
             y_error[: int(len(y_error) * SPLIT_TRAIN_PROPORTION)]
         )
-        print(
+        logging.info(
             f"error training augmented features shape: {X_error_train.shape} | error train augmented targets shape: {y_error_train.shape}"
         )
 
@@ -289,7 +279,9 @@ def correct_prediction_predicting_error(
         grid_search.fit(X_error_train, y_error_train)
 
         model = LGBMRegressor(**grid_search.best_params_)
-        print(f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}")
+        logging.info(
+            f"RandomizedGridSearchCV.best_params_: = {grid_search.best_params_}"
+        )
 
     if shuffle_train:
         shuffle_indices = np.random.permutation(len(X_error_train))
@@ -305,7 +297,7 @@ def correct_prediction_predicting_error(
             random_state=SPLIT_RANDOM_STATE,
             shuffle=False,
         )
-        print(f"Early stopping with {val_size} samples")
+        logging.info(f"Early stopping with {val_size} samples")
 
         model.fit(
             X_error_train,
@@ -324,7 +316,7 @@ def correct_prediction_predicting_error(
     error_preds = model.predict(error_features)
 
     n_heading_paddings = ERROR_LOOK_BACK_DAYS + ERROR_LOOK_FORWARDS_DAYS - 1
-    print(f"n_heading_paddings = {n_heading_paddings}")
+    logging.info(f"n_heading_paddings = {n_heading_paddings}")
     error_preds = np.pad(error_preds, (n_heading_paddings, 0), constant_values=0)
     y_preds_corrected = y_preds + error_preds
     return y_preds_corrected
@@ -408,7 +400,7 @@ def augment_data_with_random_deviation(
     aug_max_value = time_series.mean()
     accumulated_time_series_aug = np.array([])
     n_concatenations_list = []
-    print(
+    logging.info(
         f"time_series before augmentation: {time_series.shape} | mean={time_series.mean()}, max={time_series.max()}, min={time_series.min()}"
     )
     while len(accumulated_time_series_aug) <= (time_series_l * NUM_AUGMENTATIONS):
@@ -433,10 +425,10 @@ def augment_data_with_random_deviation(
             )
             n_concatenations_list.append(n_concatenations)
     time_series_aug = np.concatenate((time_series, accumulated_time_series_aug))
-    print(
+    logging.info(
         f"time_series_aug after augmentation: {time_series_aug.shape} | max={time_series_aug.max()}, min={time_series_aug.min()}"
     )
-    print(f"sum n_concatenations_list = {sum(n_concatenations_list)}")
+    logging.info(f"sum n_concatenations_list = {sum(n_concatenations_list)}")
     features, targets = create_dataset(
         time_series_aug,
         look_back=ERROR_LOOK_BACK_DAYS,
