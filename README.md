@@ -13,7 +13,7 @@ python -m venv venv
 This will create a directory named venv that contains the virtual environment.
 ### 2. Activate the Virtual Environment
 ```bash
-python -m venv venv
+source venv/bin/activate
 ```
 Once activated, your terminal prompt will change to indicate that the virtual environment is active.
 ### 3. Install dependencies
