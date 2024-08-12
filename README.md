@@ -28,7 +28,19 @@ When you not longer want to use this environment, you can deactivate the virtual
 deactivate
 ```
 This will return your terminal to the global Python environment.
-
+### 4. Install Oracle Instant Client Libraries on Ubuntu
+To be able to upload predictions to the Oracle DB, Oracle Instant Client requires certain dependencies to be installed on your system. Install them with the following command:
+```bash
+sudo apt-get install libaio1 libaio-dev
+```
+and then set `LD_LIBRARY_PATH` to ensure that the system can locate the Oracle Instant Client libraries. You can do this by adding the following line to your ~/.bashrc or ~/.bash_profile:
+```bash
+export LD_LIBRARY_PATH=/your/path/to/oracle/client/libs # For example, /opt/oracle/instantclient_21_8
+```
+After adding the line, reload your .bashrc file:
+```bash
+source ~/.bashrc
+```
 ## Training an model
 To run the model, activate your virtual environment and execute the *run.py* script. This script trains the Informer2020 model by wrapping the execution of the script *main_informer.py*. The settings of the run of this wrapper are determined for what is defined in the *single_run/run_vars.py* file.
 
