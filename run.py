@@ -51,5 +51,5 @@ plot_true_and_predicted_corrected_signal()
 logging.info(f"RESULTS_PATH: {RESULTS_PATH}")
 
 # Upsert predictions to DB
-logging.info(f"Uploading predictions to DB")
-upsert_predictions()
+#logging.info(f"Uploading predictions to DB")
+#upsert_predictions()

@@ -1,3 +1,4 @@
+import os
 """Variables that set the run of the script that trains and informer and plots its results."""
 
 FEATURES_SEQ_LEN = 28 # Days to look back when generating samples
@@ -17,7 +18,9 @@ SPLIT_TRAIN_PROPORTION = 0.67
 SPLIT_VAL_PROPORTION = 0.13
 SPLIT_RANDOM_STATE = 42
 
-DATA_DATE = "20240809" # Raw data identifier. Next date to the last date of the dataset
+DATA_DATE = "20240830" # Raw data identifier. Next date to the last date of the dataset
+# Leer DATA_DATE desde la variable de entorno
+#DATA_DATE = os.getenv('DATA_DATE', '20240820')  # Valor por defecto en caso de que no esté definida
 
 SIGNALS_DIR = "data/logtel" # Directory where raw data is stored
 SIGNAL_FILENAME = f"cantidad_entregas_total_{DATA_DATE}.csv" # Raw data filename

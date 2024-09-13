@@ -1,0 +1,1 @@
+export LD_LIBRARY_PATH=/opt/oracle/instantclient-basic-linux.x64-23.5.0.24.07/instantclient_23_5
